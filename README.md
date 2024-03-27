@@ -27,9 +27,9 @@ Este programa en Java genera archivos con datos aleatorios y permite al usuario 
 
 ## Autores
 
-Oscar Elias Aponte P
-Cristian Alejandro Muñoz O
-William Fernando Riaño M
+Oscar Elias Aponte P.
+Cristian Alejandro Muñoz O.
+William Fernando Riaño M.
 
-Version
+## Version
 1.0 (26 de marzo de 2024)
