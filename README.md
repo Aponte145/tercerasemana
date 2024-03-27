@@ -25,8 +25,7 @@ Este programa en Java genera archivos con datos aleatorios y permite al usuario 
 
 - Java SDK 17 instalado en tu sistema.
 
-Autor
-Este proyecto fue desarrollado por:
+## Autores
 
 Oscar Elias Aponte P
 Cristian Alejandro Muñoz O
