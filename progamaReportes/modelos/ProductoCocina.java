@@ -47,7 +47,8 @@ public class ProductoCocina {
             // Verifica si el nombre del producto ya ha sido utilizado
             if (!nombresUtilizados.contains(nombreProducto)) {
                 nombresUtilizados.add(nombreProducto);
-                int precioPorUnidad = random.nextInt() * (100 - 1) + 1; // Precio aleatorio entre 1 y 100
+                // limitamos el precio por unidad a un rango de 10 a 100
+                int precioPorUnidad = random.nextInt(91) + 10;
 
                 ProductoCocina producto = new ProductoCocina(idProducto, nombreProducto, precioPorUnidad);
                 productos.add(producto);

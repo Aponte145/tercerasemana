@@ -158,6 +158,7 @@ public class primeraentrega {
         System.out.println("2. Productos");
         System.out.println("3. Ventas");
         System.out.println("4. Analizar Ventas por Vendedor");
+        System.out.println("5. Analizar Ventas por Producto");
         int opcion = scanner.nextInt();
 
         switch (opcion) {
@@ -195,6 +196,11 @@ public class primeraentrega {
             case 4:
                 System.out.println("Analizando Archivos...");
                 generarInformeProductosVendidosPorVendedor();
+                generarDatos();
+                break;
+            case 5:
+                System.out.println("Analizando Archivos...");
+                generarInformeProductos();
                 generarDatos();
                 break;
             default:
@@ -360,8 +366,8 @@ public class primeraentrega {
     // vendidos
     public void generarInformeProductosVendidosPorVendedor() {
         // Crea un arreglo para almacenar los datos
-        List<String> datos = new ArrayList<>();
         Map<String, StringBuilder> ventasPorVendedor = new HashMap<>();
+        Map<String, Integer> totalVentasPorVendedor = new HashMap<>();
 
         // cantidad de productos vendidos por vendedor
         File directory = new File(".");
@@ -398,6 +404,92 @@ public class primeraentrega {
             e.printStackTrace();
 
         }
+        List<String> productos = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader("ProductosCocina.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                productos.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+
+        for (String vendedor : vendedores) {
+            String[] data = vendedor.split(";");
+            String key = data[2] + ";" + data[3];
+            StringBuilder ventas = ventasPorVendedor.get(key);
+            if (ventas != null) {
+                String[] lines = ventas.toString().split("\n");
+                int total = 0;
+                for (String line : lines) {
+                    String[] values = line.split(";");
+                    int idProducto = Integer.parseInt(values[0]);
+                    int cantidad = Integer.parseInt(values[1]);
+                    String producto = productos.get(idProducto - 1);
+                    String[] productoData = producto.split(";");
+                    int precio = Integer.parseInt(productoData[2]);
+                    total += precio * cantidad;
+                }
+
+                totalVentasPorVendedor.put(data[0] + " " + data[1], total);
+            }
+        }
+        try {
+            // verifica si el archivo existe
+            File file = new File("totalVentasPorVendedor.csv");
+            if (file.exists()) {
+                eliminarArchivo("totalVentasPorVendedor.csv");
+            }
+            BufferedWriter writer = new BufferedWriter(new FileWriter("totalVentasPorVendedor.csv"));
+            writer.write("Producto;Total Venta");
+            writer.newLine();
+            totalVentasPorVendedor.entrySet().stream().sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                    .forEach(entry -> {
+                        try {
+                            writer.write(entry.getKey() + ";" + entry.getValue());
+                            writer.newLine();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+
+    }
+
+    public void generarInformeProductos() {
+        // Crea un arreglo para almacenar los datos
+        Map<String, StringBuilder> ventasPorVendedor = new HashMap<>();
+        Map<String, Object[]> totalVentasPorProductos = new HashMap<>();
+
+        // cantidad de productos vendidos por vendedor
+        File directory = new File(".");
+        // Obtiene la lista de archivos del directorio
+        File[] files = directory.listFiles();
+        // Recorre la lista de archivos
+        for (File file : files) {
+            // Verifica si el archivo es un archivo regular y si el nombre empieza con
+            if (file.isFile() && file.getName().startsWith("ProductosVendidosPorVendedor")) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    String vendedorActual = null;
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (vendedorActual == null) {
+                            vendedorActual = line;
+                            ventasPorVendedor.put(vendedorActual, new StringBuilder());
+                        } else {
+                            ventasPorVendedor.get(vendedorActual).append(line).append("\n");
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
         // tomamos el archivo de productos y creamos un arreglo con los datos
         List<String> productos = new ArrayList<>();
@@ -411,30 +503,56 @@ public class primeraentrega {
 
         }
 
-        // imprime los datos de los productos vendidos por vendedor
-        for (String vendedor : vendedores) {
-            String[] data = vendedor.split(";");
-            String key = data[2] + ";" + data[3];
-            StringBuilder ventas = ventasPorVendedor.get(key);
-            if (ventas != null) {
-                System.out.println("Vendedor: " + data[0] + " " + data[1]);
-                System.out.println("Ventas:");
+        for (String producto : productos) {
+            String[] data = producto.split(";");
+            int idProducto = Integer.parseInt(data[0]);
+            int total = 0;
+            int totalVentas = 0;
+            for (String vendedor : ventasPorVendedor.keySet()) {
+                StringBuilder ventas = ventasPorVendedor.get(vendedor);
                 String[] lines = ventas.toString().split("\n");
-                int total = 0;
                 for (String line : lines) {
                     String[] values = line.split(";");
-                    int idProducto = Integer.parseInt(values[0]);
+                    int idProductoVendido = Integer.parseInt(values[0]);
                     int cantidad = Integer.parseInt(values[1]);
-                    String producto = productos.get(idProducto - 1);
-                    String[] productoData = producto.split(";");
-                    int precio = Integer.parseInt(productoData[2]);
-                    total += precio * cantidad;
-                    System.out.println(
-                            productoData[1] + ": " + cantidad + " x $" + precio + " = $" + (precio * cantidad));
+                    int precio = Integer.parseInt(data[2]);
+                    if (idProducto == idProductoVendido) {
+                        total += cantidad;
+                        totalVentas += cantidad * precio;
+
+                    }
                 }
-                System.out.println("Total: $" + total);
-                System.out.println();
             }
+            totalVentasPorProductos.put(data[1], new Object[] { total, totalVentas });
+
+        }
+
+        // crea un archivo totalVentasPorVendedor donde se muestra el total de ventas
+        // por vendedor CSV
+        try {
+
+            File file = new File("totalVentasPorProducto.csv");
+            if (file.exists()) {
+                eliminarArchivo("totalVentasPorProducto.csv");
+            }
+            BufferedWriter writer = new BufferedWriter(new FileWriter("totalVentasPorProducto.csv"));
+            writer.write("Producto;Cantidad;Total Venta");
+            writer.newLine();
+            totalVentasPorProductos.entrySet().stream()
+                    .sorted((e1, e2) -> ((Integer) e2.getValue()[0]).compareTo((Integer) e1.getValue()[0]))
+                    .forEach(entry -> {
+                        try {
+
+                            writer.write(entry.getKey() + ";" + entry.getValue()[0] + ";" + entry.getValue()[1]);
+                            writer.newLine();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+
         }
 
     }
